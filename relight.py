@@ -2,7 +2,7 @@ import os
 import sys
 import time
 
-current_minute = time.time() / 60
+current_minute = int(time.time() / 60)
 restarts = 0
 
 while True:
@@ -22,7 +22,7 @@ while True:
     print >>log, time.ctime(), "exited with signal", signal
     log.close()
 
-    minute = time.time() / 60
+    minute = int(time.time() / 60)
     if minute != current_minute:
         current_minute = minute
         restarts = 0
