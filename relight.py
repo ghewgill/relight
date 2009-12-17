@@ -27,13 +27,46 @@ import os
 import sys
 import time
 
+RELIGHTS = 5
+LOGFILE = "relight.log"
+WAIT = 5
+
+a = 1
+while a < len(sys.argv) and sys.argv[a].startswith("-"):
+    if sys.argv[a] == "-n":
+        a += 1
+        RELIGHTS = int(sys.argv[a])
+        a += 1
+    elif sys.argv[a] == "-l":
+        a += 1
+        LOGFILE = sys.argv[a]
+        a += 1
+    elif sys.argv[a] == "-w":
+        a += 1
+        WAIT = int(sys.argv[a])
+        a += 1
+    else:
+        print >>sys.stderr, "relight: unknown option", sys.argv[a]
+        sys.exit(1)
+
+if a >= len(sys.argv):
+    print "Usage: %s [options] command args ..." % sys.argv[0]
+    print
+    print "        -n restarts"
+    print "            number of restarts within a minute before we give up (default 5)"
+    print "        -l logfile"
+    print "            name of log file (default relight.log)"
+    print "        -w wait"
+    print "            seconds to wait between restarts (default 5)"
+    sys.exit(1)
+
 current_minute = int(time.time() / 60)
 restarts = 0
 
 while True:
     pid = os.fork()
     if pid == 0:
-        os.execlp(sys.argv[1], *sys.argv[1:])
+        os.execlp(sys.argv[a], *sys.argv[a:])
 
     #print >>sys.stderr, "relight: pid", pid
     pid, status = os.waitpid(pid, 0)
@@ -43,7 +76,7 @@ while True:
         sys.exit(exitcode)
 
     print >>sys.stderr, "relight: process exited with signal", signal
-    log = open("relight.log", "a")
+    log = open(LOGFILE, "a")
     print >>log, time.ctime(), "exited with signal", signal
     log.close()
 
@@ -52,9 +85,9 @@ while True:
         current_minute = minute
         restarts = 0
     restarts += 1
-    if restarts >= 5:
+    if restarts >= RELIGHTS:
         print >>sys.stderr, "relight: too many restarts, exiting"
         sys.exit(1)
 
-    time.sleep(5)
+    time.sleep(WAIT)
     print >>sys.stderr, "relight: restarting process now"
